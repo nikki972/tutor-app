@@ -12,20 +12,12 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10)
 }
 
-function shiftDate(dateStr, delta) {
-  const d = new Date(dateStr)
-  d.setDate(d.getDate() + delta)
-  return d.toISOString().slice(0, 10)
-}
-
 export default function Lessons() {
   const [date, setDate] = useState(todayISO())
   const [lessons, setLessons] = useState([])
   const [students, setStudents] = useState([])
-
   const [studentId, setStudentId] = useState('')
   const [time, setTime] = useState('')
-  const [repeatWeekly, setRepeatWeekly] = useState(false)
 
   const week = getWeekDates(date)
 
@@ -42,38 +34,34 @@ export default function Lessons() {
     setStudents(st)
   }
 
-  async function handleAdd() {
+  async function add() {
     if (!studentId || !time) return
-
-    const student = students.find(s => s.id === Number(studentId))
-    if (!student) return
+    const s = students.find(x => x.id === Number(studentId))
+    if (!s) return
 
     await addLesson({
       id: Date.now(),
       date,
       time,
-      studentId: student.id,
-      studentName: student.name,
-      subject: student.subject,
-      price: student.price,
+      studentId: s.id,
+      studentName: s.name,
+      subject: s.subject,
+      price: s.price,
       status: 'planned',
       payment: 'unpaid',
-      isRecurring: repeatWeekly,
-      recurringRule: repeatWeekly
-        ? { weekday: new Date(date).getDay() }
-        : null,
+      isRecurring: false,
+      recurringRule: null,
     })
 
     setStudentId('')
     setTime('')
-    setRepeatWeekly(false)
     load()
   }
 
-  async function update(id, patch) {
-    const lesson = lessons.find(l => l.id === id)
-    if (!lesson) return
-    await updateLesson({ ...lesson, ...patch })
+  async function patch(id, p) {
+    const l = lessons.find(x => x.id === id)
+    if (!l) return
+    await updateLesson({ ...l, ...p })
     load()
   }
 
@@ -86,119 +74,48 @@ export default function Lessons() {
     <div className="screen">
       <h1>Уроки</h1>
 
-      {/* Недельный календарь */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
-        {week.map(d => (
-          <button
-            key={d}
-            onClick={() => setDate(d)}
-            className="week-day"
-            data-active={d === date}
-          >
-            {d.slice(5)}
-          </button>
-        ))}
+      <div className="week">
+        {week.map(d => {
+          const dt = new Date(d)
+          return (
+            <div
+              key={d}
+              className="week-day"
+              data-active={d === date}
+              onClick={() => setDate(d)}
+            >
+              {dt.toLocaleDateString('ru-RU', { weekday: 'short' })}
+              <strong>{dt.getDate()}</strong>
+            </div>
+          )
+        })}
       </div>
 
-      {/* Навигация по дням */}
-      <div style={{ marginBottom: 16 }}>
-        <button onClick={() => setDate(d => shiftDate(d, -1))}>◀</button>
-        <strong style={{ margin: '0 12px' }}>{date}</strong>
-        <button onClick={() => setDate(d => shiftDate(d, 1))}>▶</button>
-      </div>
-
-      {/* Добавление урока */}
       <div className="card">
-        <select
-          value={studentId}
-          onChange={e => setStudentId(e.target.value)}
-        >
+        <select value={studentId} onChange={e => setStudentId(e.target.value)}>
           <option value="">Ученик</option>
           {students.map(s => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
+            <option key={s.id} value={s.id}>{s.name}</option>
           ))}
         </select>
-
-        <input
-          type="time"
-          value={time}
-          onChange={e => setTime(e.target.value)}
-        />
-
-        <label style={{ marginLeft: 8 }}>
-          <input
-            type="checkbox"
-            checked={repeatWeekly}
-            onChange={e => setRepeatWeekly(e.target.checked)}
-          />{' '}
-          каждую неделю
-        </label>
-
-        <div style={{ marginTop: 8 }}>
-          <button onClick={handleAdd}>Добавить занятие</button>
-        </div>
+        <input type="time" value={time} onChange={e => setTime(e.target.value)} />
+        <button onClick={add}>Добавить</button>
       </div>
 
-      {lessons.length === 0 && (
-        <p className="muted">Занятий на этот день нет</p>
-      )}
-
       {lessons.map(l => (
-        <div
-          key={l.id}
-          className={`card status-${l.status}`}
-        >
-          <div style={{ marginBottom: 6 }}>
-            <strong>{l.time}</strong> — {l.studentName}
-            {l.isRecurring && ' 🔁'}
-          </div>
+        <div key={l.id} className={`card status-${l.status}`}>
+          <div className="lesson-row">
+            <div className="lesson-main">
+              <strong>{l.time} — {l.studentName}</strong>
+              <span className="muted">{l.subject}</span>
+            </div>
 
-          <div className="muted" style={{ marginBottom: 8 }}>
-            {l.subject}
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              gap: 8,
-              flexWrap: 'wrap',
-              alignItems: 'center',
-            }}
-          >
-            <select
-              value={l.status}
-              onChange={e =>
-                update(l.id, { status: e.target.value })
-              }
-            >
-              <option value="planned">Запланировано</option>
-              <option value="done">Проведено</option>
-              <option value="canceled">Отменено</option>
-            </select>
-
-            <select
-              value={l.payment}
-              onChange={e =>
-                update(l.id, { payment: e.target.value })
-              }
-            >
-              <option value="unpaid">Не оплачено</option>
-              <option value="paid">Оплачено</option>
-            </select>
-
-            <input
-              type="number"
-              value={l.price}
-              onChange={e =>
-                update(l.id, { price: Number(e.target.value) })
-              }
-              style={{ width: 80 }}
-            />
-            <span>₽</span>
-
-            <button onClick={() => remove(l.id)}>✕</button>
+            <div className="lesson-actions">
+              <span>{l.price}₽</span>
+              <button onClick={() => patch(l.id, { status: 'done' })}>✔</button>
+              <button onClick={() => patch(l.id, { payment: 'paid' })}>💰</button>
+              <button onClick={() => remove(l.id)}>✕</button>
+            </div>
           </div>
         </div>
       ))}

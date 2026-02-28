@@ -4,6 +4,7 @@
   --text: #111;
   --muted: #666;
   --border: #ddd;
+  --accent: #007aff;
 }
 
 [data-theme="dark"] {
@@ -12,6 +13,7 @@
   --text: #f5f5f7;
   --muted: #aaa;
   --border: #3a3a3c;
+  --accent: #0a84ff;
 }
 
 body {
@@ -22,15 +24,13 @@ body {
 }
 
 .screen {
-  padding: 16px;
-  padding-bottom: 90px;
+  padding: 14px;
+  padding-bottom: 96px;
 }
-
-/* ===== TYPOGRAPHY ===== */
 
 h1 {
   font-size: 22px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .muted {
@@ -38,7 +38,7 @@ h1 {
   font-size: 13px;
 }
 
-/* ===== INPUTS ===== */
+/* ===== CONTROLS ===== */
 
 button,
 select,
@@ -48,12 +48,8 @@ input {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 6px 10px;
-  min-height: 36px;
+  min-height: 34px;
   font-size: 14px;
-}
-
-button {
-  cursor: pointer;
 }
 
 /* ===== CARDS ===== */
@@ -61,25 +57,75 @@ button {
 .card {
   background: var(--card);
   border-radius: 14px;
-  padding: 14px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 
-.card.row {
+/* ===== COMPACT LESSON ROW ===== */
+
+.lesson-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-/* ===== BOTTOM TABS ===== */
+.lesson-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lesson-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ===== STATUS COLORS ===== */
+
+.status-planned { border-left: 3px solid #ffcc00; }
+.status-done { border-left: 3px solid #34c759; }
+.status-canceled { border-left: 3px solid #ff3b30; }
+
+/* ===== WEEK CALENDAR (iOS STYLE) ===== */
+
+.week {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.week-day {
+  flex: 1;
+  padding: 6px 0;
+  border-radius: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  text-align: center;
+  font-size: 12px;
+}
+
+.week-day strong {
+  display: block;
+  font-size: 15px;
+}
+
+.week-day[data-active="true"] {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* ===== BOTTOM TABS (ICONS) ===== */
 
 .tabs {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 60px;
+  height: 64px;
   display: flex;
   background: var(--card);
   border-top: 1px solid var(--border);
@@ -88,64 +134,35 @@ button {
 .tabs a {
   flex: 1;
   text-align: center;
-  line-height: 60px;
   text-decoration: none;
   color: var(--muted);
+  font-size: 22px;
+  line-height: 64px;
 }
 
 .tabs a.active {
-  color: var(--text);
-  font-weight: 600;
+  color: var(--accent);
 }
 
-/* ===== STATUS COLORS ===== */
+/* ===== FAB ===== */
 
-.status-planned {
-  border-left: 4px solid #ffcc00;
-}
-
-.status-done {
-  border-left: 4px solid #34c759;
-}
-
-.status-canceled {
-  border-left: 4px solid #ff3b30;
-}
-
-/* ===== WEEK CALENDAR ===== */
-
-.week-day {
-  flex: 1;
-  padding: 6px 0;
-  border-radius: 10px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  text-align: center;
-}
-
-.week-day[data-active="true"] {
-  background: #007aff;
-  color: #fff;
-  border-color: #007aff;
-}
-
-/* ===== FLOATING ADD BUTTON ===== */
 .fab {
   position: fixed;
   right: 16px;
-  bottom: 76px;
+  bottom: 84px;
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #007aff;
+  background: var(--accent);
   color: #fff;
   font-size: 32px;
   border: none;
-  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.25);
   z-index: 20;
 }
 
 /* ===== MODAL ===== */
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -162,17 +179,4 @@ button {
   padding: 16px;
   width: 90%;
   max-width: 360px;
-}
-
-/* ===== ICON HINTS ===== */
-.status-done::after {
-  content: ' ✔';
-}
-
-.status-planned::after {
-  content: ' ⏳';
-}
-
-.status-canceled::after {
-  content: ' ✖';
 }
