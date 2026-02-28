@@ -6,18 +6,28 @@ import {
   updateLesson,
 } from '../db/lessons'
 import { getStudents } from '../db/students'
+import { getWeekDates } from '../utils/dates'
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10)
+}
+
+function shiftDate(dateStr, delta) {
+  const d = new Date(dateStr)
+  d.setDate(d.getDate() + delta)
+  return d.toISOString().slice(0, 10)
 }
 
 export default function Lessons() {
   const [date, setDate] = useState(todayISO())
   const [lessons, setLessons] = useState([])
   const [students, setStudents] = useState([])
+
   const [studentId, setStudentId] = useState('')
   const [time, setTime] = useState('')
   const [repeatWeekly, setRepeatWeekly] = useState(false)
+
+  const week = getWeekDates(date)
 
   useEffect(() => {
     load()
@@ -34,6 +44,7 @@ export default function Lessons() {
 
   async function handleAdd() {
     if (!studentId || !time) return
+
     const student = students.find(s => s.id === Number(studentId))
     if (!student) return
 
@@ -45,16 +56,16 @@ export default function Lessons() {
       studentName: student.name,
       subject: student.subject,
       price: student.price,
-      status: 'planned',
-      payment: 'unpaid',
+      status: 'planned', // planned | done | canceled
+      payment: 'unpaid', // paid | unpaid
       isRecurring: repeatWeekly,
       recurringRule: repeatWeekly
         ? { weekday: new Date(date).getDay() }
         : null,
     })
 
-    setTime('')
     setStudentId('')
+    setTime('')
     setRepeatWeekly(false)
     load()
   }
@@ -75,72 +86,128 @@ export default function Lessons() {
     <div className="screen">
       <h1>Уроки</h1>
 
-      <div style={{ marginBottom: 12 }}>
+      {/* Недельный календарь */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+        {week.map(d => (
+          <button
+            key={d}
+            onClick={() => setDate(d)}
+            style={{
+              flex: 1,
+              fontWeight: d === date ? '600' : '400',
+            }}
+          >
+            {d.slice(5)}
+          </button>
+        ))}
+      </div>
+
+      {/* Навигация по дням */}
+      <div style={{ marginBottom: 16 }}>
         <button onClick={() => setDate(d => shiftDate(d, -1))}>◀</button>
-        <strong style={{ margin: '0 8px' }}>{date}</strong>
+        <strong style={{ margin: '0 12px' }}>{date}</strong>
         <button onClick={() => setDate(d => shiftDate(d, 1))}>▶</button>
       </div>
 
-      <div style={{ marginBottom: 16 }}>
-        <select value={studentId} onChange={e => setStudentId(e.target.value)}>
+      {/* Добавление урока */}
+      <div className="card">
+        <select
+          value={studentId}
+          onChange={e => setStudentId(e.target.value)}
+        >
           <option value="">Ученик</option>
           {students.map(s => (
-            <option key={s.id} value={s.id}>{s.name}</option>
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
           ))}
         </select>
 
-        <input type="time" value={time} onChange={e => setTime(e.target.value)} />
+        <input
+          type="time"
+          value={time}
+          onChange={e => setTime(e.target.value)}
+        />
 
         <label style={{ marginLeft: 8 }}>
           <input
             type="checkbox"
             checked={repeatWeekly}
             onChange={e => setRepeatWeekly(e.target.checked)}
-          />
+          />{' '}
           каждую неделю
         </label>
 
-        <button onClick={handleAdd}>Добавить</button>
+        <div style={{ marginTop: 8 }}>
+          <button onClick={handleAdd}>Добавить занятие</button>
+        </div>
       </div>
 
-      {lessons.length === 0 && <p>Занятий нет</p>}
+      {/* Список уроков */}
+      {lessons.length === 0 && (
+        <p className="muted">Занятий на этот день нет</p>
+      )}
 
       {lessons.map(l => (
-        <div key={l.id} style={{ borderBottom: '1px solid #ddd', padding: 8 }}>
-          <div>
+        <div
+          key={l.id}
+          className={`card status-${l.status}`}
+        >
+          <div style={{ marginBottom: 6 }}>
             <strong>{l.time}</strong> — {l.studentName}
             {l.isRecurring && ' 🔁'}
           </div>
 
-          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+          <div className="muted" style={{ marginBottom: 8 }}>
+            {l.subject}
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              gap: 8,
+              flexWrap: 'wrap',
+              alignItems: 'center',
+            }}
+          >
+            {/* Статус занятия */}
             <select
               value={l.status}
-              onChange={e => update(l.id, { status: e.target.value })}
+              onChange={e =>
+                update(l.id, { status: e.target.value })
+              }
             >
               <option value="planned">Запланировано</option>
               <option value="done">Проведено</option>
               <option value="canceled">Отменено</option>
             </select>
 
+            {/* Статус оплаты */}
             <select
               value={l.payment}
-              onChange={e => update(l.id, { payment: e.target.value })}
+              onChange={e =>
+                update(l.id, { payment: e.target.value })
+              }
             >
               <option value="unpaid">Не оплачено</option>
               <option value="paid">Оплачено</option>
             </select>
 
-            <span>{l.price} ₽</span>
+            {/* Цена занятия */}
+            <input
+              type="number"
+              value={l.price}
+              onChange={e =>
+                update(l.id, { price: Number(e.target.value) })
+              }
+              style={{ width: 80 }}
+            />
+            <span>₽</span>
+
             <button onClick={() => remove(l.id)}>✕</button>
           </div>
         </div>
       ))}
     </div>
   )
-}
-
-function shiftDate(dateStr, delta) {
-  const d = new Date(dateStr)
-  d.setDate(d.getDate() + delta)
-  return d.toISOString().slice(0, 10)
 }

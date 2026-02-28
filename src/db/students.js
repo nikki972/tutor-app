@@ -10,6 +10,11 @@ export async function addStudent(student) {
   return db.put('students', student)
 }
 
+export async function updateStudent(student) {
+  const db = await dbPromise
+  return db.put('students', student)
+}
+
 export async function deleteStudent(id) {
   const db = await dbPromise
   return db.delete('students', id)

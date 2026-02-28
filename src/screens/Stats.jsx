@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
 import { getAllLessons } from '../db/lessons'
-import { calcIncome } from '../utils/stats'
+import { calcFact, calcPlan } from '../utils/stats'
 
 export default function Stats() {
-  const [day, setDay] = useState(0)
-  const [week, setWeek] = useState(0)
-  const [month, setMonth] = useState(0)
+  const [data, setData] = useState({})
 
   useEffect(() => {
     load()
@@ -15,34 +13,36 @@ export default function Stats() {
     const all = await getAllLessons()
     const now = new Date()
 
-    const isSameDay = d => d === now.toISOString().slice(0, 10)
+    const by = fn => all.filter(l => fn(new Date(l.date)))
 
-    const isSameWeek = d => {
-      const dt = new Date(d)
-      const diff = (now - dt) / (1000 * 60 * 60 * 24)
-      return diff >= 0 && diff < 7
-    }
+    const sameDay = d => d.toDateString() === now.toDateString()
+    const sameWeek = d => (now - d) / 86400000 < 7
+    const sameMonth = d =>
+      d.getMonth() === now.getMonth() &&
+      d.getFullYear() === now.getFullYear()
 
-    const isSameMonth = d => {
-      const dt = new Date(d)
-      return (
-        dt.getMonth() === now.getMonth() &&
-        dt.getFullYear() === now.getFullYear()
-      )
-    }
-
-    setDay(calcIncome(all.filter(l => isSameDay(l.date))))
-    setWeek(calcIncome(all.filter(l => isSameWeek(l.date))))
-    setMonth(calcIncome(all.filter(l => isSameMonth(l.date))))
+    setData({
+      day: by(sameDay),
+      week: by(sameWeek),
+      month: by(sameMonth),
+    })
   }
 
   return (
     <div className="screen">
       <h1>Статистика</h1>
 
-      <p>Сегодня: {day} ₽</p>
-      <p>Неделя: {week} ₽</p>
-      <p>Месяц: {month} ₽</p>
+      {['day', 'week', 'month'].map(k => (
+        <div key={k} className="card">
+          <strong>{k === 'day' ? 'День' : k === 'week' ? 'Неделя' : 'Месяц'}</strong>
+          <div className="muted">
+            Факт: {calcFact(data[k] || [])} ₽
+          </div>
+          <div className="muted">
+            План: {calcPlan(data[k] || [])} ₽
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
