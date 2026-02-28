@@ -180,3 +180,30 @@ input {
   width: 90%;
   max-width: 360px;
 }
+
+/* ===== STATS BARS ===== */
+
+.bar-wrap {
+  background: var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.bar {
+  height: 28px;
+  line-height: 28px;
+  padding-left: 8px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.bar.plan {
+  background: #ffd60a;
+  color: #000;
+}
+
+.bar.fact {
+  background: #34c759;
+  color: #fff;
+}
