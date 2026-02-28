@@ -128,3 +128,51 @@ button {
   color: #fff;
   border-color: #007aff;
 }
+
+/* ===== FLOATING ADD BUTTON ===== */
+.fab {
+  position: fixed;
+  right: 16px;
+  bottom: 76px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #007aff;
+  color: #fff;
+  font-size: 32px;
+  border: none;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+  z-index: 20;
+}
+
+/* ===== MODAL ===== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 30;
+}
+
+.modal {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 16px;
+  width: 90%;
+  max-width: 360px;
+}
+
+/* ===== ICON HINTS ===== */
+.status-done::after {
+  content: ' ✔';
+}
+
+.status-planned::after {
+  content: ' ⏳';
+}
+
+.status-canceled::after {
+  content: ' ✖';
+}
