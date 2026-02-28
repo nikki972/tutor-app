@@ -56,8 +56,8 @@ export default function Lessons() {
       studentName: student.name,
       subject: student.subject,
       price: student.price,
-      status: 'planned', // planned | done | canceled
-      payment: 'unpaid', // paid | unpaid
+      status: 'planned',
+      payment: 'unpaid',
       isRecurring: repeatWeekly,
       recurringRule: repeatWeekly
         ? { weekday: new Date(date).getDay() }
@@ -92,10 +92,8 @@ export default function Lessons() {
           <button
             key={d}
             onClick={() => setDate(d)}
-            style={{
-              flex: 1,
-              fontWeight: d === date ? '600' : '400',
-            }}
+            className="week-day"
+            data-active={d === date}
           >
             {d.slice(5)}
           </button>
@@ -143,7 +141,6 @@ export default function Lessons() {
         </div>
       </div>
 
-      {/* Список уроков */}
       {lessons.length === 0 && (
         <p className="muted">Занятий на этот день нет</p>
       )}
@@ -170,7 +167,6 @@ export default function Lessons() {
               alignItems: 'center',
             }}
           >
-            {/* Статус занятия */}
             <select
               value={l.status}
               onChange={e =>
@@ -182,7 +178,6 @@ export default function Lessons() {
               <option value="canceled">Отменено</option>
             </select>
 
-            {/* Статус оплаты */}
             <select
               value={l.payment}
               onChange={e =>
@@ -193,7 +188,6 @@ export default function Lessons() {
               <option value="paid">Оплачено</option>
             </select>
 
-            {/* Цена занятия */}
             <input
               type="number"
               value={l.price}

@@ -23,8 +23,22 @@ body {
 
 .screen {
   padding: 16px;
-  padding-bottom: 80px;
+  padding-bottom: 90px;
 }
+
+/* ===== TYPOGRAPHY ===== */
+
+h1 {
+  font-size: 22px;
+  margin-bottom: 16px;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ===== INPUTS ===== */
 
 button,
 select,
@@ -32,9 +46,33 @@ input {
   background: var(--card);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 6px 10px;
+  min-height: 36px;
+  font-size: 14px;
 }
+
+button {
+  cursor: pointer;
+}
+
+/* ===== CARDS ===== */
+
+.card {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.card.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ===== BOTTOM TABS ===== */
 
 .tabs {
   position: fixed;
@@ -60,38 +98,33 @@ input {
   font-weight: 600;
 }
 
-.card {
-  background: var(--card);
-  border-radius: 14px;
-  padding: 14px;
-  margin-bottom: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-
-.card.row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.muted {
-  color: var(--muted);
-  font-size: 13px;
-}
-
-h1 {
-  font-size: 22px;
-  margin-bottom: 16px;
-}
+/* ===== STATUS COLORS ===== */
 
 .status-planned {
-  border-left: 4px solid #f5a623;
+  border-left: 4px solid #ffcc00;
 }
 
 .status-done {
-  border-left: 4px solid #2ecc71;
+  border-left: 4px solid #34c759;
 }
 
 .status-canceled {
-  border-left: 4px solid #e74c3c;
+  border-left: 4px solid #ff3b30;
+}
+
+/* ===== WEEK CALENDAR ===== */
+
+.week-day {
+  flex: 1;
+  padding: 6px 0;
+  border-radius: 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  text-align: center;
+}
+
+.week-day[data-active="true"] {
+  background: #007aff;
+  color: #fff;
+  border-color: #007aff;
 }
