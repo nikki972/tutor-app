@@ -7,93 +7,66 @@ import {
   calcFact,
   calcPlan,
 } from '../utils/stats'
+import {
+  calcAverageCheck,
+  calcDebtByStudent,
+  incomeBySubject,
+} from '../utils/finance'
+import { exportFinancePDF } from '../utils/pdfFinance'
 
-function Bar({ label, fact, plan }) {
-  const max = Math.max(fact, plan, 1)
-  const factW = Math.round((fact / max) * 100)
-  const planW = Math.round((plan / max) * 100)
-
+function Section({ title, children }) {
   return (
     <div className="card">
-      <strong>{label}</strong>
-
-      <div className="bar-wrap">
-        <div className="bar plan" style={{ width: `${planW}%` }}>
-          План: {plan} ₽
-        </div>
-      </div>
-
-      <div className="bar-wrap">
-        <div className="bar fact" style={{ width: `${factW}%` }}>
-          Факт: {fact} ₽
-        </div>
-      </div>
+      <h3>{title}</h3>
+      {children}
     </div>
   )
 }
 
 export default function Stats() {
-  const [data, setData] = useState({
-    day: { fact: 0, plan: 0 },
-    week: { fact: 0, plan: 0 },
-    month: { fact: 0, plan: 0 },
-  })
+  const [lessons, setLessons] = useState([])
+  const now = new Date()
 
   useEffect(() => {
-    load()
+    getAllLessons().then(setLessons)
   }, [])
 
-  async function load() {
-    const all = await getAllLessons()
-    const now = new Date()
+  const day = lessons.filter(l => isSameDay(new Date(l.date), now))
+  const week = lessons.filter(l => isSameWeek(new Date(l.date), now))
+  const month = lessons.filter(l => isSameMonth(new Date(l.date), now))
 
-    const dayLessons = all.filter(l =>
-      isSameDay(new Date(l.date), now)
-    )
-    const weekLessons = all.filter(l =>
-      isSameWeek(new Date(l.date), now)
-    )
-    const monthLessons = all.filter(l =>
-      isSameMonth(new Date(l.date), now)
-    )
-
-    setData({
-      day: {
-        fact: calcFact(dayLessons),
-        plan: calcPlan(dayLessons),
-      },
-      week: {
-        fact: calcFact(weekLessons),
-        plan: calcPlan(weekLessons),
-      },
-      month: {
-        fact: calcFact(monthLessons),
-        plan: calcPlan(monthLessons),
-      },
-    })
-  }
+  const debt = calcDebtByStudent(lessons)
+  const bySubject = incomeBySubject(month)
 
   return (
-    <div className="screen">
-      <h1>Статистика</h1>
+    <div className="screen" id="finance-report">
+      <h1>Финансы</h1>
 
-      <Bar
-        label="Сегодня"
-        fact={data.day.fact}
-        plan={data.day.plan}
-      />
+      <Section title="Средний чек">
+        <div>Сегодня: <b>{calcAverageCheck(day)} ₽</b></div>
+        <div>Неделя: <b>{calcAverageCheck(week)} ₽</b></div>
+        <div>Месяц: <b>{calcAverageCheck(month)} ₽</b></div>
+      </Section>
 
-      <Bar
-        label="Неделя"
-        fact={data.week.fact}
-        plan={data.week.plan}
-      />
+      <Section title="Задолженность">
+        {Object.keys(debt).length === 0 && <div className="muted">Нет долгов</div>}
+        {Object.entries(debt).map(([name, sum]) => (
+          <div key={name}>{name}: <b>{sum} ₽</b></div>
+        ))}
+      </Section>
 
-      <Bar
-        label="Месяц"
-        fact={data.month.fact}
-        plan={data.month.plan}
-      />
+      <Section title="Доход по предметам (месяц)">
+        {Object.entries(bySubject).map(([subj, sum]) => (
+          <div key={subj}>{subj}: <b>{sum} ₽</b></div>
+        ))}
+      </Section>
+
+      <Section title="Итоги месяца">
+        <div>План: <b>{calcPlan(month)} ₽</b></div>
+        <div>Факт: <b>{calcFact(month)} ₽</b></div>
+      </Section>
+
+      <button onClick={exportFinancePDF}>📄 Экспорт PDF</button>
     </div>
   )
 }
