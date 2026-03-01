@@ -1,32 +1,60 @@
 import { useEffect, useState } from 'react'
-import { getAllLessons } from '../db/lessons'
+import { getLessons } from '../db/lessons'
+
+const STATUS_LABELS = {
+  done: 'Проведено',
+  canceled: 'Отменено',
+  moved: 'Перенесено',
+}
 
 export default function Archive() {
   const [lessons, setLessons] = useState([])
+  const [statusFilter, setStatusFilter] = useState('all')
 
   useEffect(() => {
-    load()
+    getLessons().then(all => {
+      const past = all.filter(l => l.status !== 'planned')
+      setLessons(past)
+    })
   }, [])
 
-  async function load() {
-    const all = await getAllLessons()
-    const today = new Date().toISOString().slice(0, 10)
-    setLessons(all.filter(l => l.date < today))
-  }
+  const filtered = lessons.filter(l =>
+    statusFilter === 'all' ? true : l.status === statusFilter
+  )
 
   return (
     <div className="screen">
-      <h1>Архив</h1>
+      <h2>Архив занятий</h2>
 
-      {lessons.length === 0 && <p>Архив пуст</p>}
+      <div className="filters">
+        <select
+          value={statusFilter}
+          onChange={e => setStatusFilter(e.target.value)}
+        >
+          <option value="all">Все</option>
+          <option value="done">Проведённые</option>
+          <option value="canceled">Отменённые</option>
+          <option value="moved">Перенесённые</option>
+        </select>
+      </div>
 
-      {lessons.map(l => (
-        <div key={l.id} style={{ borderBottom: '1px solid #ddd', padding: 8 }}>
-          <div>
-            {l.date} {l.time} — {l.studentName}
+      {filtered.length === 0 && (
+        <div className="empty">Нет занятий</div>
+      )}
+
+      {filtered.map(l => (
+        <div key={l.id} className={`lesson-card ${l.status}`}>
+          <div className="lesson-main">
+            <div className="lesson-time">{l.date} {l.time}</div>
+            <div className="lesson-student">{l.student}</div>
           </div>
-          <div>
-            {l.status} / {l.payment} / {l.price} ₽
+
+          <div className="lesson-meta">
+            <span>{l.subject}</span>
+            <span>{l.price} ₽</span>
+            <span className={`status ${l.status}`}>
+              {STATUS_LABELS[l.status] || l.status}
+            </span>
           </div>
         </div>
       ))}
