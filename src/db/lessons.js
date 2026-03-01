@@ -1,60 +1,56 @@
-import { dbPromise } from './index'
+import { db } from './index'
 import { getWeekday } from '../utils/dates'
 
-export async function getLessonsByDate(date) {
-  const db = await dbPromise
-  const all = await db.getAll('lessons')
+const STORE = 'lessons'
 
-  // 1. обычные уроки
-  const normal = all.filter(l => l.date === date)
-
-  // 2. повторы
-  const weekday = getWeekday(date)
-
-  const recurring = all.filter(
-    l =>
-      l.isRecurring &&
-      l.recurringRule &&
-      l.recurringRule.weekday === weekday &&
-      l.date <= date // правило создано раньше
-  )
-
-  // создаём реальные уроки, если их ещё нет
-  for (const r of recurring) {
-    const exists = normal.find(
-      n => n.studentId === r.studentId && n.time === r.time
-    )
-    if (!exists) {
-      const instance = {
-        ...r,
-        id: Date.now() + Math.random(),
-        date,
-        isRecurring: false,
-      }
-      await db.put('lessons', instance)
-      normal.push(instance)
-    }
-  }
-
-  return normal
+export async function getLessons() {
+  return (await db.getAll(STORE)) || []
 }
 
-export async function getAllLessons() {
-  const db = await dbPromise
-  return db.getAll('lessons')
+export async function getLessonsByDate(date) {
+  const all = await getLessons()
+  return all.filter(l => l.date === date)
 }
 
 export async function addLesson(lesson) {
-  const db = await dbPromise
-  return db.put('lessons', lesson)
+  return db.put(STORE, {
+    ...lesson,
+    status: lesson.status || 'planned', // planned | done | canceled
+    createdAt: Date.now(),
+  })
 }
 
-export async function updateLesson(lesson) {
-  const db = await dbPromise
-  return db.put('lessons', lesson)
+export async function updateLesson(id, patch) {
+  const lesson = await db.get(STORE, id)
+  if (!lesson) return
+  return db.put(STORE, { ...lesson, ...patch })
 }
 
-export async function deleteLesson(id) {
-  const db = await dbPromise
-  return db.delete('lessons', id)
+export async function removeLesson(id) {
+  return db.delete(STORE, id)
+}
+
+/**
+ * Используется для автогенерации повторов
+ */
+export async function generateWeeklyLessons(baseLesson, weeks = 4) {
+  const lessons = []
+
+  for (let i = 1; i <= weeks; i++) {
+    const date = new Date(baseLesson.date)
+    date.setDate(date.getDate() + i * 7)
+
+    lessons.push({
+      ...baseLesson,
+      id: undefined,
+      date: date.toISOString().slice(0, 10),
+      weekday: getWeekday(date),
+      status: 'planned',
+      createdAt: Date.now(),
+    })
+  }
+
+  for (const lesson of lessons) {
+    await db.put(STORE, lesson)
+  }
 }
