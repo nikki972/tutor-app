@@ -1,21 +1,26 @@
-import { dbPromise } from './index'
+import { db } from './index'
+
+const STORE = 'students'
 
 export async function getStudents() {
-  const db = await dbPromise
-  return db.getAll('students')
+  return (await db.getAll(STORE)) || []
 }
 
 export async function addStudent(student) {
-  const db = await dbPromise
-  return db.put('students', student)
+  return db.put(STORE, {
+    ...student,
+    status: student.status || 'active',
+    notes: student.notes || '',
+    createdAt: Date.now(),
+  })
 }
 
-export async function updateStudent(student) {
-  const db = await dbPromise
-  return db.put('students', student)
+export async function updateStudent(id, patch) {
+  const student = await db.get(STORE, id)
+  if (!student) return
+  return db.put(STORE, { ...student, ...patch })
 }
 
-export async function deleteStudent(id) {
-  const db = await dbPromise
-  return db.delete('students', id)
+export async function removeStudent(id) {
+  return db.delete(STORE, id)
 }
