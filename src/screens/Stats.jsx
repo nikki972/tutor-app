@@ -1,72 +1,102 @@
 import { useEffect, useState } from 'react'
-import { getAllLessons } from '../db/lessons'
+import { getLessons } from '../db/lessons'
 import {
   isSameDay,
   isSameWeek,
   isSameMonth,
-  calcFact,
-  calcPlan,
-} from '../utils/stats'
-import {
-  calcAverageCheck,
-  calcDebtByStudent,
-  incomeBySubject,
-} from '../utils/finance'
-import { exportFinancePDF } from '../utils/pdfFinance'
+} from '../utils/dates'
 
-function Section({ title, children }) {
-  return (
-    <div className="card">
-      <h3>{title}</h3>
-      {children}
-    </div>
-  )
+const PERIODS = {
+  day: 'День',
+  week: 'Неделя',
+  month: 'Месяц',
 }
 
 export default function Stats() {
-  const [lessons, setLessons] = useState([])
-  const now = new Date()
+  const [period, setPeriod] = useState('week')
+  const [plan, setPlan] = useState(0)
+  const [fact, setFact] = useState(0)
 
   useEffect(() => {
-    getAllLessons().then(setLessons)
-  }, [])
+    calculate()
+  }, [period])
 
-  const day = lessons.filter(l => isSameDay(new Date(l.date), now))
-  const week = lessons.filter(l => isSameWeek(new Date(l.date), now))
-  const month = lessons.filter(l => isSameMonth(new Date(l.date), now))
+  async function calculate() {
+    const lessons = await getLessons()
+    const now = new Date()
 
-  const debt = calcDebtByStudent(lessons)
-  const bySubject = incomeBySubject(month)
+    let planSum = 0
+    let factSum = 0
+
+    for (const l of lessons) {
+      if (!l.date || !l.price) continue
+
+      const d = new Date(l.date)
+
+      const inPeriod =
+        period === 'day'
+          ? isSameDay(d, now)
+          : period === 'week'
+          ? isSameWeek(d, now)
+          : isSameMonth(d, now)
+
+      if (!inPeriod) continue
+
+      if (l.status === 'done') {
+        factSum += Number(l.price)
+      }
+
+      if (l.status === 'planned') {
+        planSum += Number(l.price)
+      }
+    }
+
+    setPlan(planSum)
+    setFact(factSum)
+  }
 
   return (
-    <div className="screen" id="finance-report">
-      <h1>Финансы</h1>
+    <div className="screen">
+      <h2>Статистика</h2>
 
-      <Section title="Средний чек">
-        <div>Сегодня: <b>{calcAverageCheck(day)} ₽</b></div>
-        <div>Неделя: <b>{calcAverageCheck(week)} ₽</b></div>
-        <div>Месяц: <b>{calcAverageCheck(month)} ₽</b></div>
-      </Section>
-
-      <Section title="Задолженность">
-        {Object.keys(debt).length === 0 && <div className="muted">Нет долгов</div>}
-        {Object.entries(debt).map(([name, sum]) => (
-          <div key={name}>{name}: <b>{sum} ₽</b></div>
+      <div className="segmented">
+        {Object.entries(PERIODS).map(([key, label]) => (
+          <button
+            key={key}
+            className={period === key ? 'active' : ''}
+            onClick={() => setPeriod(key)}
+          >
+            {label}
+          </button>
         ))}
-      </Section>
+      </div>
 
-      <Section title="Доход по предметам (месяц)">
-        {Object.entries(bySubject).map(([subj, sum]) => (
-          <div key={subj}>{subj}: <b>{sum} ₽</b></div>
-        ))}
-      </Section>
+      <div className="stats-cards">
+        <div className="stat-card plan">
+          <div className="label">План</div>
+          <div className="value">{plan} ₽</div>
+        </div>
 
-      <Section title="Итоги месяца">
-        <div>План: <b>{calcPlan(month)} ₽</b></div>
-        <div>Факт: <b>{calcFact(month)} ₽</b></div>
-      </Section>
+        <div className="stat-card fact">
+          <div className="label">Факт</div>
+          <div className="value">{fact} ₽</div>
+        </div>
+      </div>
 
-      <button onClick={exportFinancePDF}>📄 Экспорт PDF</button>
+      <div className="chart">
+        <div
+          className="bar plan"
+          style={{ height: `${Math.max(plan / 100, 4)}px` }}
+        >
+          План
+        </div>
+        <div
+          className="bar fact"
+          style={{ height: `${Math.max(fact / 100, 4)}px` }}
+        >
+          Факт
+        </div>
+      </div>
     </div>
   )
 }
