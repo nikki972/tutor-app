@@ -1,13 +1,13 @@
-import { dbPromise } from '../db'
+import { getLessons } from '../db/lessons'
+import { getStudents } from '../db/students'
 
 export async function exportBackup() {
-  const db = await dbPromise
-  const students = await db.getAll('students')
-  const lessons = await db.getAll('lessons')
+  const lessons = await getLessons()
+  const students = await getStudents()
 
   const data = {
     version: 1,
-    date: new Date().toISOString(),
+    exportedAt: new Date().toISOString(),
     students,
     lessons,
   }
@@ -16,25 +16,14 @@ export async function exportBackup() {
     type: 'application/json',
   })
 
+  const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
-  a.href = URL.createObjectURL(blob)
-  a.download = 'tutor-backup.json'
+
+  a.href = url
+  a.download = `backup-${new Date().toISOString().slice(0, 10)}.json`
+  document.body.appendChild(a)
   a.click()
-}
 
-export async function importBackup(file) {
-  const text = await file.text()
-  const data = JSON.parse(text)
-
-  const db = await dbPromise
-  const tx = db.transaction(['students', 'lessons'], 'readwrite')
-
-  await Promise.all(
-    data.students.map(s => tx.objectStore('students').put(s))
-  )
-  await Promise.all(
-    data.lessons.map(l => tx.objectStore('lessons').put(l))
-  )
-
-  await tx.done
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
