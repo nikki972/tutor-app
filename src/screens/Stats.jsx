@@ -1,10 +1,36 @@
 import { useEffect, useState } from 'react'
 import { getLessons } from '../db/lessons'
-import {
-  isSameDay,
-  isSameWeek,
-  isSameMonth,
-} from '../utils/dates'
+
+/* ---------- helpers (локально, без импортов) ---------- */
+
+function isSameDay(a, b) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  )
+}
+
+function isSameWeek(a, b) {
+  const startOfWeek = d => {
+    const date = new Date(d)
+    const day = date.getDay() || 7
+    date.setHours(0, 0, 0, 0)
+    date.setDate(date.getDate() - day + 1)
+    return date
+  }
+
+  return +startOfWeek(a) === +startOfWeek(b)
+}
+
+function isSameMonth(a, b) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth()
+  )
+}
+
+/* ----------------------------------------------------- */
 
 const PERIODS = {
   day: 'День',
@@ -42,12 +68,12 @@ export default function Stats() {
 
       if (!inPeriod) continue
 
-      if (l.status === 'done') {
-        factSum += Number(l.price)
-      }
-
       if (l.status === 'planned') {
         planSum += Number(l.price)
+      }
+
+      if (l.status === 'done') {
+        factSum += Number(l.price)
       }
     }
 
@@ -86,13 +112,13 @@ export default function Stats() {
       <div className="chart">
         <div
           className="bar plan"
-          style={{ height: `${Math.max(plan / 100, 4)}px` }}
+          style={{ height: `${Math.max(plan / 100, 6)}px` }}
         >
           План
         </div>
         <div
           className="bar fact"
-          style={{ height: `${Math.max(fact / 100, 4)}px` }}
+          style={{ height: `${Math.max(fact / 100, 6)}px` }}
         >
           Факт
         </div>
