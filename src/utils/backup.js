@@ -1,5 +1,6 @@
 import { getLessons } from '../db/lessons'
-import { getStudents } from '../db/students'
+import { getStudents, addStudent } from '../db/students'
+import { addLesson } from '../db/lessons'
 
 export async function exportBackup() {
   const lessons = await getLessons()
@@ -7,9 +8,9 @@ export async function exportBackup() {
 
   const data = {
     version: 1,
-    exportedAt: new Date().toISOString(),
-    students,
+    createdAt: new Date().toISOString(),
     lessons,
+    students,
   }
 
   const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -18,12 +19,25 @@ export async function exportBackup() {
 
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
-
   a.href = url
-  a.download = `backup-${new Date().toISOString().slice(0, 10)}.json`
-  document.body.appendChild(a)
+  a.download = 'backup.json'
   a.click()
-
-  document.body.removeChild(a)
   URL.revokeObjectURL(url)
+}
+
+export async function importBackup(file) {
+  const text = await file.text()
+  const data = JSON.parse(text)
+
+  if (!data.lessons || !data.students) {
+    throw new Error('Invalid backup file')
+  }
+
+  for (const student of data.students) {
+    await addStudent(student)
+  }
+
+  for (const lesson of data.lessons) {
+    await addLesson(lesson)
+  }
 }

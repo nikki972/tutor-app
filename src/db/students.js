@@ -1,26 +1,32 @@
-import { db } from './index'
+import { openDB } from 'idb'
 
+const DB_NAME = 'school-db'
 const STORE = 'students'
 
+const dbPromise = openDB(DB_NAME, 1, {
+  upgrade(db) {
+    if (!db.objectStoreNames.contains(STORE)) {
+      db.createObjectStore(STORE, { keyPath: 'id' })
+    }
+  },
+})
+
 export async function getStudents() {
-  return (await db.getAll(STORE)) || []
+  const db = await dbPromise
+  return db.getAll(STORE)
 }
 
 export async function addStudent(student) {
-  return db.put(STORE, {
-    ...student,
-    status: student.status || 'active',
-    notes: student.notes || '',
-    createdAt: Date.now(),
-  })
+  const db = await dbPromise
+  await db.put(STORE, student)
 }
 
-export async function updateStudent(id, patch) {
-  const student = await db.get(STORE, id)
-  if (!student) return
-  return db.put(STORE, { ...student, ...patch })
+export async function updateStudent(student) {
+  const db = await dbPromise
+  await db.put(STORE, student)
 }
 
 export async function removeStudent(id) {
-  return db.delete(STORE, id)
+  const db = await dbPromise
+  await db.delete(STORE, id)
 }
