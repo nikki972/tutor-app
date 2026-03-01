@@ -5,7 +5,7 @@ import {
   updateStudent,
   removeStudent,
 } from '../db/students'
-import { getAllLessons } from '../db/lessons'
+import { getLessons } from '../db/lessons'
 
 const STATUS_LABELS = {
   active: 'Активен',
@@ -21,7 +21,7 @@ export default function Students() {
 
   useEffect(() => {
     refresh()
-    getAllLessons().then(setLessons)
+    getLessons().then(setLessons)
   }, [])
 
   function refresh() {
