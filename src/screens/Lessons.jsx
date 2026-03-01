@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getLessonsByDate, addLesson, updateLesson, deleteLesson } from '../db/lessons'
+import { getLessonsByDate, addLesson, updateLesson, removeLesson } from '../db/lessons'
 import { getStudents } from '../db/students'
 import { getWeekDates } from '../utils/dates'
 import { findFreeTime, hasConflict } from '../utils/schedule'
